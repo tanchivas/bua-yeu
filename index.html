@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For vk iu - Final Fixed</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            margin: 0; overflow: hidden; background-color: #050505; 
+            font-family: 'Montserrat', sans-serif; user-select: none;
+        }
+        #background-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            background: radial-gradient(circle at center, #9c4b75 0%, #5e2240 45%, #1f0814 100%);
+        }
+        #noise-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            opacity: 0.04; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 2; }
+        
+        #visualizer-canvas {
+            position: absolute; 
+            bottom: 25px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 40%; 
+            height: 60px; 
+            z-index: 15; 
+            pointer-events: none; 
+            opacity: 0.8; 
+        }
+        
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 0 30px 0;
+        }
+        h1 { 
+            color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 30px; font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 5px; margin: 0; 
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.6); opacity: 0; 
+            animation: fadeIn 3s ease-out forwards 1s;
+        }
+        .hide-title { opacity: 0 !important; }
+        .guide-container { margin-bottom: 110px; text-align: center; opacity: 0.8; transition: opacity 0.3s; }
+        .guide-text { 
+            color: #ffcae5; font-size: 14px; font-weight: 300; font-style: italic; 
+            text-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
+        }
+        .highlight { color: #ffffff; font-weight: 600; text-decoration: underline decoration-pink; }
+
+        #webcam-wrapper {
+            position: absolute; bottom: 20px; left: 20px; width: 120px; height: 90px;
+            border-radius: 8px; overflow: hidden; z-index: 50; background: #000;
+            border: 1px solid rgba(255, 158, 205, 0.3); opacity: 0.5; transition: opacity 0.3s;
+        }
+        #webcam-wrapper:hover { opacity: 1; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        
+        #status-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(82, 37, 56, 0.8);
+            padding: 2px 0; color: #ffcae5; font-size: 10px; text-align: center; z-index: 60;
+        }
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #1a0510; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s ease;
+        }
+        .loader-text { color: #ff9ecd; font-family: 'Great Vibes', cursive; margin-top: 20px; font-size: 30px; }
+        .spinner {
+            width: 30px; height: 30px; border: 2px solid rgba(255, 158, 205, 0.2); 
+            border-radius: 50%; border-top-color: #ff9ecd; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="loading-screen"><div class="spinner"></div><div class="loader-text">Loading Love...</div></div>
+    <div id="background-layer"></div><div id="noise-overlay"></div><div id="canvas-container"></div>
+    <canvas id="visualizer-canvas"></canvas>
+    <div id="ui-layer">
+        <h1 id="main-title">CAROT_PEN</h1>
+        <div class="guide-container"><span class="guide-text" id="guide-text">Đang chuẩn bị...</span></div>
+    </div>
+    <div id="webcam-wrapper"><video id="webcam" autoplay playsinline muted></video><div id="status-bar">Init...</div></div>
+    
+    <audio id="audio-bg" src="./audio.mp3" loop></audio>
+    <audio id="audio-letter" src="./The Way I Still Love You - Reynard Silva (Lyrics + Vietsub)  - YouTube.mp3" loop></audio>
+    <audio id="audio-fox" src="./i love u.mp3" loop></audio>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
+
+        const CONFIG = {
+            maxCount: 20000,      
+            particleSize: 0.08,   
+            spread: 100,
+            fadeSpeed: 2.0, 
+            slideSpeed: 15.0, 
+            slideGap: 40,     
+            smoothFactor: 0.12, 
+            gestureThreshold: 10, 
+            heartThreshold: 0.15,
+            sparkleCount: 150     
+        };
+
+        const IMG_FOX = './target.png'; 
+        const IMG_PEN = './target2.png'; 
+        const IMG_LETTER = './mess.png'; 
+        const IMG_PHOTO_SINGLE = './photo.png';
+        
+        const SLIDE_IMAGES = ['./image/1.png', './image/2.png', './image/3.png', './image/4.png', './image/5.png', './image/6.png'];
+
+        let scene, camera, renderer, composer, clock, bloomPass;
+        let mainGroup, instancedMesh, messageMesh, singlePhotoMesh, slideshowGroup; 
+        let glitterSystem, starSystem, whiteStarSystem, sparkleSystem; 
+        let sparkleIndices = []; 
+        
+        let auraRingSystem; const AURA_COUNT = 300; 
+
+        let audioContext, audioAnalyser, audioSource, audioDataArray;
+        let isAudioSetup = false;
+        let visualizerCanvas, visualizerCtx;
+
+        let slides = []; let totalSlideWidth = 0; 
+        let pCurrent, pTarget, pScatter; let count = 0;
+        let dummy = new THREE.Object3D();
+        const _tempColor = new THREE.Color(); const _targetColor = new THREE.Color(0xff69b4);
+
+        let handLandmarker, video; let isFoxLoaded = false, isPenLoaded = false;
+        let appState = 'FOX'; let interactionLock = 0; let lastActionTime = 0; 
+        let isLoadingDelay = false; let loadingDelayTime = 0;
+
+        let handParallax = { x: 0, y: 0 }; let smoothedParallax = { x: 0, y: 0 }; 
+        let imagesData = { 1: { data: null, width: 0, height: 0 }, 2: { data: null, width: 0, height: 0 } };
+
+        let currentBloomStrength = 0; let currentOpacity = 1.0;
+        let animLetter = { scale: 0, y: -50, pScale: 1, pY: 0 };
+        let animSlide = { opacity: 0 }; let animSinglePhoto = { opacity: 0, scale: 0 };
+        let gestureBuffer = { pinch: 0, open: 0, heart: 0, fist: 0 };
+
+        async function init() {
+            updateStatus("Loading Engine...");
+            initThree();
+            setupPostProcessing();
+            setupMessageMesh(); setupSinglePhoto(); setupSlideshow(); 
+            initInstancedMesh(CONFIG.maxCount); 
+            setupSparkles(); 
+            setupGlitter(); setupFloatingStars(); setupWhiteStars();
+            setupAuraRing();
+            
+            const p1 = loadImage(IMG_FOX, 1); 
+            const p2 = loadImage(IMG_PEN, 2);
+            
+            Promise.all([p1, p2])
+                .then(() => { useImageData(1); updateStatus("Loading AI Vision..."); })
+                .catch(err => { console.error("Error assets", err); updateStatus("Error assets"); });
+
+            await initMediaPipe();
+            setupEvents();
+            initVisualizer2D();
+            
+            const _hexCre = "Tân ❤️ Thảo";
+            const _cId = 'dhao-copyright';
+            const _el = document.createElement('div');
+            _el.id = _cId;
+            _el.innerText = _hexCre;
+            Object.assign(_el.style, {
+                position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', 
+                fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000'
+            });
+            document.body.appendChild(_el);
+
+            animate();
+        }
+
+        function hideLoading() {
+            const el = document.getElementById('loading-screen');
+            if(el && el.style.opacity !== '0') { 
+                el.style.opacity = 0; 
+                setTimeout(() => { if (el) el.remove(); }, 1000); 
+                interactionLock = Date.now() + 3000; // Khóa tương tác 3 giây sau khi vào giao diện
+                
+                const aFox = document.getElementById('audio-fox');
+                if (aFox) {
+                    if(!isAudioSetup) setupAudioSystem();
+                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    aFox.play().catch(e=>console.log("Audio block"));
+                }
+            }
+        }
+
+        function setupAudioSystem() {
+            if (isAudioSetup) return;
+            const aBg = document.getElementById('audio-bg');
+            const aLet = document.getElementById('audio-letter');
+            const aFox = document.getElementById('audio-fox');
+            if (!aBg || !aLet || !aFox) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            audioAnalyser = audioContext.createAnalyser();
+            audioAnalyser.fftSize = 256;
+            
+            const sourceBg = audioContext.createMediaElementSource(aBg);
+            const sourceLet = audioContext.createMediaElementSource(aLet);
+            const sourceFox = audioContext.createMediaElementSource(aFox);
+            
+            sourceBg.connect(audioAnalyser);
+            sourceLet.connect(audioAnalyser);
+            sourceFox.connect(audioAnalyser);
+            
+            audioAnalyser.connect(audioContext.destination);
+            audioDataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
+            isAudioSetup = true;
+        }
+
+        function initVisualizer2D() {
+            visualizerCanvas = document.getElementById('visualizer-canvas');
+            if(visualizerCanvas) {
+                visualizerCtx = visualizerCanvas.getContext('2d');
+                const updateSize = () => { visualizerCanvas.width = visualizerCanvas.offsetWidth; visualizerCanvas.height = visualizerCanvas.offsetHeight; };
+                updateSize(); window.addEventListener('resize', updateSize);
+            }
+        }
+
+        function drawVisualizer() {
+            if (!isAudioSetup || !visualizerCtx || !visualizerCanvas) return;
+            const width = visualizerCanvas.width; const height = visualizerCanvas.height; const ctx = visualizerCtx;
+            ctx.clearRect(0, 0, width, height);
+            audioAnalyser.getByteFrequencyData(audioDataArray);
+            
+            const barWidth = (width / audioDataArray.length) * 2.5; 
+            let x = 0; const centerY = height / 2;
+            
+            for (let i = 0; i < audioDataArray.length; i+=2) { 
+                const barHeight = (audioDataArray[i] / 255) * height * 0.6; 
+                const r = 255; const g = 150 + (i * 0.5); const b = 200;
+                ctx.fillStyle = `rgba(${r},${g},${b}, 0.8)`;
+                ctx.fillRect(width/2 + x, centerY - barHeight/2, barWidth, barHeight);
+                ctx.fillRect(width/2 - x - barWidth, centerY - barHeight/2, barWidth, barHeight);
+                x += barWidth + 2; 
+            }
+        }
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x5e2240, 0.002);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 70;
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "default", alpha: true }); 
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+            clock = new THREE.Clock();
+        }
+        function setupPostProcessing() {
+            const renderScene = new RenderPass(scene, camera);
+            bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth/4, window.innerHeight/4), 1.5, 0.8, 0.8);
+            bloomPass.threshold = 0; bloomPass.strength = 0; bloomPass.radius = 0.5;
+            composer = new EffectComposer(renderer); composer.addPass(renderScene); composer.addPass(bloomPass);
+        }
+
+        function initInstancedMesh(cnt) {
+            const geo = new THREE.IcosahedronGeometry(CONFIG.particleSize, 0);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1, depthWrite: false });
+            instancedMesh = new THREE.InstancedMesh(geo, mat, cnt);
+            instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            pCurrent = new Float32Array(cnt*3); pTarget = new Float32Array(cnt*3); pScatter = new Float32Array(cnt*3);
+            mainGroup = new THREE.Group(); mainGroup.add(instancedMesh); scene.add(mainGroup);
+        }
+
+        function setupSparkles() {
+            const geom = new THREE.BufferGeometry();
+            const positions = new Float32Array(CONFIG.sparkleCount * 3);
+            const colors = new Float32Array(CONFIG.sparkleCount * 3);
+            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            const tex = createCircleTexture();
+            const mat = new THREE.PointsMaterial({ size: 0.6, transparent: true, opacity: 1.0, map: tex, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false });
+            sparkleSystem = new THREE.Points(geom, mat); mainGroup.add(sparkleSystem); 
+        }
+
+        function setupAuraRing() {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(AURA_COUNT * 3);
+            const baseRadius = 45; const ringThickness = 8; 
+            for (let i = 0; i < AURA_COUNT; i++) {
+                const theta = Math.random() * Math.PI * 2; 
+                const r = baseRadius + (Math.random() - 0.5) * ringThickness;
+                const x = r * Math.cos(theta); const y = r * Math.sin(theta) * 0.7; const z = (Math.random() - 0.5) * 20; 
+                positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const tex = createCircleTexture();
+            const material = new THREE.PointsMaterial({ color: 0xffaadd, size: 0.8, map: tex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+            auraRingSystem = new THREE.Points(geometry, material); scene.add(auraRingSystem); 
+        }
+
+        function updateAuraRing(dt, bass) {
+            if (!auraRingSystem) return;
+            auraRingSystem.rotation.z += dt * 0.1; auraRingSystem.rotation.y = Math.sin(clock.elapsedTime * 0.5) * 0.1;
+            const targetScale = 1.0; const currentScale = auraRingSystem.scale.x;
+            const smoothScale = currentScale + (targetScale - currentScale) * dt * 10;
+            auraRingSystem.scale.setScalar(smoothScale);
+            const targetOpacity = 0.4; auraRingSystem.material.opacity = targetOpacity;
+            auraRingSystem.material.color.setHex(0xffaadd);
+        }
+
+        function createCircleTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(16,16,0, 16,16,16);
+            grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.4, 'rgba(255,255,255,0.8)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,32,32);
+            const tex = new THREE.Texture(canvas); tex.needsUpdate = true; return tex;
+        }
+
+        function setupSlideshow() {
+            slideshowGroup = new THREE.Group(); slideshowGroup.position.z = 25; scene.add(slideshowGroup);
+            const textureLoader = new THREE.TextureLoader();
+            const photoSize = 22; const cardWidth = 24; const cardHeight = 28; 
+            totalSlideWidth = SLIDE_IMAGES.length * CONFIG.slideGap;
+            let startX = -(totalSlideWidth / 2) + (CONFIG.slideGap / 2);
+            
+            const extensions = ['jpg', 'png', 'jpeg'];
+            
+            for (let i = 1; i <= SLIDE_IMAGES.length; i++) {
+                const index = i - 1;
+                let extIndex = 0;
+                
+                const tryLoad = () => {
+                    const path = `./image/${i}.${extensions[extIndex]}`;
+                    textureLoader.load(
+                        path,
+                        (tex) => {
+                            const cardGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
+                            const cardMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+                            const cardMesh = new THREE.Mesh(cardGeo, cardMat);
+                            const imgAspect = tex.image.width / tex.image.height;
+                            if (imgAspect > 1) { tex.repeat.set(1 / imgAspect, 1); tex.offset.x = (1 - (1/imgAspect)) / 2; } 
+                            else { tex.repeat.set(1, imgAspect); tex.offset.y = (1 - imgAspect) / 2; }
+                            const photoGeo = new THREE.PlaneGeometry(photoSize, photoSize);
+                            const photoMat = new THREE.MeshBasicMaterial({ map: tex, color: 0xffffff, transparent: true, opacity: 0 });
+                            const photoMesh = new THREE.Mesh(photoGeo, photoMat);
+                            photoMesh.position.z = 0.1; photoMesh.position.y = 1.5; 
+                            const polaroid = new THREE.Group(); polaroid.add(cardMesh); polaroid.add(photoMesh);
+                            polaroid.position.set(startX + (index * CONFIG.slideGap), 0, 0);
+                            polaroid.rotation.z = (Math.random() - 0.5) * 0.2;
+                            polaroid.userData = { materials: [cardMat, photoMat] };
+                            slides.push(polaroid); slideshowGroup.add(polaroid);
+                        },
+                        undefined,
+                        (err) => {
+                            extIndex++;
+                            if (extIndex < extensions.length) {
+                                tryLoad();
+                            } else {
+                                console.error(`Error loading image ${i} with any supported extension.`);
+                            }
+                        }
+                    );
+                };
+                tryLoad();
+            }
+        }
+
+        function setupFloatingStars(){
+            const starCount = 100; 
+            const geom = new THREE.BufferGeometry(); const pos=new Float32Array(starCount*3); const spd=new Float32Array(starCount);
+            for(let i=0;i<starCount;i++){ pos[i*3]=(Math.random()-0.5)*300; pos[i*3+1]=(Math.random()-0.5)*200; pos[i*3+2]=(Math.random()-0.5)*100-50; spd[i]=0.2+Math.random()*0.5; }
+            geom.setAttribute('position',new THREE.BufferAttribute(pos,3)); geom.setAttribute('speed',new THREE.BufferAttribute(spd,1));
+            const mat=new THREE.PointsMaterial({color:0xffccdd,size:1.0,transparent:true,opacity:0.6,blending:THREE.AdditiveBlending,depthWrite:false,map:createCircleTexture()});
+            starSystem=new THREE.Points(geom,mat); scene.add(starSystem);
+        }
+        function setupWhiteStars(){
+            const count=150; 
+            const geom=new THREE.BufferGeometry(); const pos=new Float32Array(count*3); const spd=new Float32Array(count);
+            for(let i=0;i<count;i++){ pos[i*3]=(Math.random()-0.5)*350; pos[i*3+1]=(Math.random()-0.5)*250; pos[i*3+2]=(Math.random()-0.5)*150-20; spd[i]=0.1+Math.random()*0.3; }
+            geom.setAttribute('position',new THREE.BufferAttribute(pos,3)); geom.setAttribute('speed',new THREE.BufferAttribute(spd,1));
+            const mat=new THREE.PointsMaterial({color:0xffffff,size:0.5,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false,map:createCircleTexture()});
+            whiteStarSystem=new THREE.Points(geom,mat); scene.add(whiteStarSystem);
+        }
+        function updateFloatingStars(dt){
+            if(starSystem){ const p=starSystem.geometry.attributes.position.array; const s=starSystem.geometry.attributes.speed.array; for(let i=0;i<p.length/3;i++){ p[i*3+1]+=s[i]*dt*5.0; if(p[i*3+1]>100){p[i*3+1]=-100; p[i*3]=(Math.random()-0.5)*300;} } starSystem.geometry.attributes.position.needsUpdate=true; starSystem.material.opacity=0.6+Math.sin(clock.elapsedTime)*0.2; }
+            if(whiteStarSystem){ const p=whiteStarSystem.geometry.attributes.position.array; const s=whiteStarSystem.geometry.attributes.speed.array; for(let i=0;i<p.length/3;i++){ p[i*3+1]+=s[i]*dt*3.0; if(p[i*3+1]>120){p[i*3+1]=-120; p[i*3]=(Math.random()-0.5)*350;} } whiteStarSystem.geometry.attributes.position.needsUpdate=true; whiteStarSystem.material.opacity=0.4+Math.cos(clock.elapsedTime*0.8)*0.15; }
+        }
+        function setupGlitter(){
+            const c=150; 
+            const g=new THREE.BufferGeometry(); const p=new Float32Array(c*3); const s=new Float32Array(c);
+            for(let i=0;i<c;i++){ p[i*3]=(Math.random()-0.5)*200; p[i*3+1]=(Math.random()-0.5)*100; p[i*3+2]=(Math.random()-0.5)*50+20; s[i]=0.5+Math.random()*1.5; }
+            g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('speed',new THREE.BufferAttribute(s,1));
+            const m=new THREE.PointsMaterial({color:0xffb7c5,size:1.5,transparent:true,opacity:0.8,blending:THREE.AdditiveBlending,depthWrite:false,map:createCircleTexture()});
+            glitterSystem=new THREE.Points(g,m); scene.add(glitterSystem);
+        }
+        function updateGlitter(dt){
+            if(!glitterSystem)return; const p=glitterSystem.geometry.attributes.position.array; const s=glitterSystem.geometry.attributes.speed.array;
+            for(let i=0;i<p.length/3;i++){ p[i*3+1]+=s[i]*dt; p[i*3]+=Math.sin(clock.elapsedTime+i)*0.02; if(p[i*3+1]>60){p[i*3+1]=-60; p[i*3]=(Math.random()-0.5)*200;} }
+            glitterSystem.geometry.attributes.position.needsUpdate=true; glitterSystem.material.opacity=0.4+Math.sin(clock.elapsedTime*2)*0.2;
+        }
+        function setupMessageMesh() {
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(IMG_LETTER, (tex) => {
+                const aspect = tex.image.width / tex.image.height; const h = 40; const w = h * aspect;
+                const geo = new THREE.PlaneGeometry(w, h);
+                const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 1, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
+                messageMesh = new THREE.Mesh(geo, mat); messageMesh.renderOrder = 999; messageMesh.position.set(0, -60, 25); messageMesh.scale.set(0,0,0); scene.add(messageMesh);
+            }, undefined, (err) => console.log("Err mess"));
+        }
+        function setupSinglePhoto() {
+             const textureLoader = new THREE.TextureLoader();
+             textureLoader.load(IMG_PHOTO_SINGLE, (tex) => {
+                const aspect = tex.image.width / tex.image.height; const h = 40; const w = h * aspect;
+                const geo = new THREE.PlaneGeometry(w, h);
+                const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, side: THREE.DoubleSide });
+                singlePhotoMesh = new THREE.Mesh(geo, mat); singlePhotoMesh.position.set(0, 0, 30); scene.add(singlePhotoMesh);
+             }, undefined, (err) => console.log("Err photo"));
+        }
+        function loadImage(url, id) {
+            return new Promise((resolve, reject) => {
+                const img = new Image(); img.crossOrigin = "Anonymous"; img.src = url;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    const maxSize = 400; const aspect = img.width / img.height; const h = maxSize; const w = Math.floor(h * aspect);
+                    canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+                    imagesData[id].data = ctx.getImageData(0, 0, w, h).data; imagesData[id].width = w; imagesData[id].height = h;
+                    if(id===1) isFoxLoaded=true; else isPenLoaded=true; resolve();
+                };
+                img.onerror = () => reject();
+            });
+        }
+        function useImageData(id) {
+            const data = imagesData[id].data; const w = imagesData[id].width; const h = imagesData[id].height; if(!data) return;
+            const validIndices = []; for (let i = 0; i < data.length; i += 4) { if (data[i+3] > 50) validIndices.push(i); }
+            const activeCount = Math.min(CONFIG.maxCount, validIndices.length); count = activeCount; instancedMesh.count = count;
+            const spread = 60; const imgAspect = h / w; const step = validIndices.length / activeCount;
+            sparkleIndices = []; const sparkleTotal = Math.min(CONFIG.sparkleCount, activeCount);
+            for(let k=0; k<sparkleTotal; k++) { sparkleIndices.push(Math.floor(Math.random() * activeCount)); }
+            const spColors = sparkleSystem.geometry.attributes.color.array;
+            for (let i = 0; i < activeCount; i++) {
+                const idx = validIndices[Math.floor(i * step)];
+                const px = (idx/4) % w; const py = Math.floor((idx/4) / w);
+                const tx = (px / w - 0.5) * spread; const ty = -(py / h - 0.5) * spread * imgAspect; const tz = (Math.random() - 0.5) * 2; 
+                pTarget[i*3] = tx; pTarget[i*3+1] = ty; pTarget[i*3+2] = tz;
+                const ang = Math.random()*Math.PI*2; const rad = spread * (1.5 + Math.random());
+                pScatter[i*3] = Math.cos(ang)*rad; pScatter[i*3+1] = Math.sin(ang)*rad; pScatter[i*3+2] = (Math.random()-0.5)*100;
+                if (appState === 'FOX' && id === 1 && currentOpacity === 1.0) { pCurrent[i*3] = tx; pCurrent[i*3+1] = ty; pCurrent[i*3+2] = tz; }
+                const r = data[idx], g = data[idx+1], b = data[idx+2];
+                _tempColor.setRGB(r/255, g/255, b/255).lerp(_targetColor, 0.1); instancedMesh.setColorAt(i, _tempColor);
+            }
+            for(let k=0; k < sparkleTotal; k++) {
+                const particleIndex = sparkleIndices[k]; const idx = validIndices[Math.floor(particleIndex * step)];
+                const r = data[idx]; const g = data[idx+1]; const b = data[idx+2]; const boost = 1.5; 
+                spColors[k*3]   = Math.min(1, (r/255) * boost + 0.2); spColors[k*3+1] = Math.min(1, (g/255) * boost + 0.2); spColors[k*3+2] = Math.min(1, (b/255) * boost + 0.2);
+            }
+            sparkleSystem.geometry.attributes.color.needsUpdate = true;
+            instancedMesh.instanceMatrix.needsUpdate = true; instancedMesh.instanceColor.needsUpdate = true;
+        }
+        
+        function animate() {
+            const _0x1 = document.getElementById('dhao-copyright');
+            const _0x2 = "Tân ❤️ Thảo";
+            if (!_0x1 || _0x1.innerText !== _0x2 || getComputedStyle(_0x1).display === 'none' || getComputedStyle(_0x1).opacity === '0' || getComputedStyle(_0x1).visibility === 'hidden') {
+                if (scene) scene.clear();
+                const _n = document.createElement('div'); _n.id = 'dhao-copyright'; _n.innerText = _0x2;
+                Object.assign(_n.style, { position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000' });
+                document.body.appendChild(_n);
+            }
+
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+
+            let musicBass = 0;
+            if (isAudioSetup && audioAnalyser && audioDataArray) {
+                drawVisualizer();
+                let sum = 0; for (let i = 0; i < 20; i++) { sum += audioDataArray[i]; }
+                musicBass = (sum / 20) / 255; 
+            }
+
+            updateParticles(dt, musicBass); 
+            updateGlitter(dt); updateFloatingStars(dt); 
+            updateAuraRing(dt, musicBass);
+            composer.render();
+        }
+
+        function updateParticles(dt, musicBass = 0) {
+            if (!instancedMesh) return;
+            const time = clock.getElapsedTime();
+            let targetOpacity = 1.0; let targetBloom = 0.0; let moveTarget = 'TARGET'; 
+            smoothedParallax.x += (handParallax.x - smoothedParallax.x) * 3.0 * dt; smoothedParallax.y += (handParallax.y - smoothedParallax.y) * 3.0 * dt;
+            const tiltX = smoothedParallax.y * 0.3; const tiltY = smoothedParallax.x * 0.3; const breathingY = Math.sin(time * 0.5) * 0.1;
+
+            if (isLoadingDelay) { loadingDelayTime -= dt; if (loadingDelayTime <= 0) { isLoadingDelay = false; setGuide("Nắm tay <span class='highlight'>✊</span> để biến Cà rốt, hoặc ghép Tim 🫶"); } }
+            const h1 = document.getElementById('main-title'); if(h1) { if(appState === 'READING_LETTER') h1.classList.add('hide-title'); else h1.classList.remove('hide-title'); }
+
+            switch (appState) {
+                case 'FOX': targetOpacity = 1.0; targetBloom = 0.0; if (isLoadingDelay) setGuide("Loading..."); break;
+                case 'TRANSITION_TO_PEN': targetOpacity = 0.0; targetBloom = 4.0; moveTarget = 'SCATTER'; if (currentOpacity < 0.05) { useImageData(2); mainGroup.rotation.set(0,0,0); appState = 'REASSEMBLING_PEN'; } break;
+                case 'REASSEMBLING_PEN': targetOpacity = 1.0; targetBloom = 0.0; moveTarget = 'TARGET'; if (currentOpacity > 0.95) appState = 'PEN'; break;
+                case 'PEN': targetOpacity = 1.0; targetBloom = 0.0; setGuide("Giơ ngón tay chữ V <span class='highlight'>✌️</span> mở thư, hoặc Xòe tay về Cáo"); break;
+                case 'READING_LETTER': targetOpacity = 0.4; targetBloom = 0.0; setGuide("Xòe tay <span class='highlight'>✋</span> để đóng thư"); break;
+                case 'BACK_TO_FOX': targetOpacity = 0.0; targetBloom = 4.0; moveTarget = 'SCATTER'; if (currentOpacity < 0.05) { useImageData(1); mainGroup.rotation.set(0,0,0); appState = 'REASSEMBLING_FOX'; } break;
+                case 'REASSEMBLING_FOX': targetOpacity = 1.0; targetBloom = 0.0; moveTarget = 'TARGET'; if (currentOpacity > 0.95) { appState = 'FOX'; updateStatus("Cáo đã về."); isLoadingDelay = true; loadingDelayTime = 2.0; setGuide("Loading..."); interactionLock = Date.now() + 2000; } break;
+                case 'SLIDESHOW': targetOpacity = 0.0; targetBloom = 0.0; moveTarget = 'SCATTER'; setGuide("Xòe tay <span class='highlight'>✋</span> để quay lại."); break;
+                case 'VIEW_PHOTO': targetOpacity = 0.2; targetBloom = 0.1; setGuide("Xòe tay <span class='highlight'>✋</span> để quay lại."); break;
+            }
+
+            if (appState === 'VIEW_PHOTO') { animSinglePhoto.opacity += (1.0 - animSinglePhoto.opacity) * 2.0 * dt; animSinglePhoto.scale += (1.0 - animSinglePhoto.scale) * 2.0 * dt; } 
+            else { animSinglePhoto.opacity += (0 - animSinglePhoto.opacity) * 3.0 * dt; animSinglePhoto.scale += (0 - animSinglePhoto.scale) * 3.0 * dt; }
+            if(singlePhotoMesh) { singlePhotoMesh.material.opacity = animSinglePhoto.opacity; singlePhotoMesh.scale.setScalar(animSinglePhoto.scale); singlePhotoMesh.rotation.x = tiltX * 0.5; singlePhotoMesh.rotation.y = tiltY * 0.5; }
+
+            if (appState === 'READING_LETTER') { animLetter.pScale += (0.1 - animLetter.pScale) * 2.0 * dt; animLetter.pY += (-40 - animLetter.pY) * 2.0 * dt; animLetter.scale += (1.0 - animLetter.scale) * 3.0 * dt; animLetter.y += (0 - animLetter.y) * 3.0 * dt; } 
+            else { animLetter.pScale += (1.0 - animLetter.pScale) * 2.0 * dt; animLetter.pY += (0 - animLetter.pY) * 2.0 * dt; animLetter.scale += (0 - animLetter.scale) * 4.0 * dt; animLetter.y += (-60 - animLetter.y) * 2.0 * dt; }
+
+            if (appState === 'SLIDESHOW') {
+                animSlide.opacity += (1.0 - animSlide.opacity) * 3.0 * dt;
+                const boundary = (totalSlideWidth / 2) + CONFIG.slideGap; 
+                slides.forEach((group, idx) => {
+                    group.position.x += CONFIG.slideSpeed * dt; if (group.position.x > boundary) { group.position.x -= totalSlideWidth; }
+                    group.userData.materials.forEach(m => m.opacity = animSlide.opacity); group.rotation.y = Math.sin(time + idx) * 0.05 + (tiltY * 0.3);
+                }); slideshowGroup.rotation.x = tiltX * 0.3;
+            } else {
+                animSlide.opacity += (0 - animSlide.opacity) * 3.0 * dt; slides.forEach(group => { group.userData.materials.forEach(m => m.opacity = animSlide.opacity); });
+            }
+
+            mainGroup.scale.setScalar(animLetter.pScale); mainGroup.position.y = animLetter.pY;
+            if (appState === 'TRANSITION_TO_PEN' || appState === 'BACK_TO_FOX') { mainGroup.rotation.z += 2.0 * dt; mainGroup.rotation.x = 0; mainGroup.rotation.y = 0; } 
+            else { mainGroup.rotation.x = tiltX; mainGroup.rotation.y = tiltY + breathingY; mainGroup.rotation.z = 0; }
+            if(messageMesh) { messageMesh.scale.setScalar(animLetter.scale); messageMesh.position.y = animLetter.y; messageMesh.rotation.x = tiltX * 0.5; messageMesh.rotation.y = (tiltY * 0.5) + (Math.sin(time * 1.5) * 0.02); }
+
+            let beatBloom = targetBloom; 
+            currentBloomStrength += (beatBloom - currentBloomStrength) * 5.0 * dt; bloomPass.strength = currentBloomStrength;
+
+            if (['TRANSITION_TO_PEN', 'BACK_TO_FOX', 'SLIDESHOW', 'VIEW_PHOTO'].includes(appState)) { currentOpacity -= CONFIG.fadeSpeed * dt; } 
+            else if (['REASSEMBLING_PEN', 'REASSEMBLING_FOX'].includes(appState)) { currentOpacity += CONFIG.fadeSpeed * dt; }
+            currentOpacity = Math.max(0, Math.min(1, currentOpacity)); instancedMesh.material.opacity = currentOpacity;
+
+            const factor = (moveTarget === 'SCATTER' ? 1.0 : 2.5) * dt;
+            const isIdle = (appState === 'FOX' || appState === 'PEN'); const isScatter = (moveTarget === 'SCATTER');
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3; let tx, ty, tz;
+                if (isScatter) { tx = pScatter[i3]; ty = pScatter[i3+1]; tz = pScatter[i3+2]; } else { tx = pTarget[i3]; ty = pTarget[i3+1]; tz = pTarget[i3+2]; }
+                let cx = pCurrent[i3], cy = pCurrent[i3+1], cz = pCurrent[i3+2];
+                cx += (tx - cx) * factor; cy += (ty - cy) * factor; cz += (tz - cz) * factor;
+                if (isIdle) { cx += Math.sin(time + i) * 0.003; cy += Math.cos(time * 0.8 + i) * 0.003; }
+                pCurrent[i3] = cx; pCurrent[i3+1] = cy; pCurrent[i3+2] = cz;
+                dummy.position.set(cx, cy, cz); 
+                dummy.scale.setScalar(1.0);
+                dummy.updateMatrix(); instancedMesh.setMatrixAt(i, dummy.matrix);
+            }
+            instancedMesh.instanceMatrix.needsUpdate = true;
+            
+            if(sparkleSystem && isIdle) {
+                const spPos = sparkleSystem.geometry.attributes.position.array;
+                if (currentOpacity > 0.5) {
+                    for(let i=0; i < sparkleIndices.length; i++) {
+                        const idx = sparkleIndices[i] * 3; spPos[i*3] = pCurrent[idx]; spPos[i*3+1] = pCurrent[idx+1];
+                        const jitter = Math.sin(time * 10 + i * 132) * 0.5; spPos[i*3+2] = pCurrent[idx+2] + 2.0 + jitter; 
+                    }
+                    sparkleSystem.visible = true; sparkleSystem.material.opacity = 0.6 + Math.sin(time * 5) * 0.4;
+                } else { sparkleSystem.visible = false; }
+                sparkleSystem.geometry.attributes.position.needsUpdate = true;
+            } else if (sparkleSystem) { sparkleSystem.visible = false; }
+        }
+
+        let lastVideoTime = -1;
+        async function initMediaPipe() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "GPU" }, runningMode: "VIDEO", numHands: 2 });
+            video = document.getElementById("webcam");
+            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => { video.srcObject = stream; video.addEventListener("loadeddata", predictWebcam); });
+        }
+        async function predictWebcam() {
+            if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
+                lastVideoTime = video.currentTime;
+                if (handLandmarker && isFoxLoaded && isPenLoaded) {
+                    let startTimeMs = performance.now(); const result = handLandmarker.detectForVideo(video, startTimeMs);
+                    hideLoading(); // Ẩn màn hình Loading ngay khi AI và Camera bắt đầu chạy
+                    if (result.landmarks && result.landmarks.length > 0) {
+                        let centerX = 0, centerY = 0; result.landmarks.forEach(lm => { centerX += lm[0].x; centerY += lm[0].y; }); centerX /= result.landmarks.length; centerY /= result.landmarks.length;
+                        const targetX = (0.5 - centerX) * 2.5; const targetY = (0.5 - centerY) * 2.5;
+                        handParallax.x += (targetX - handParallax.x) * CONFIG.smoothFactor; handParallax.y += (targetY - handParallax.y) * CONFIG.smoothFactor;
+                        let isHeart = false; 
+                        const lm = result.landmarks[0]; const wrist = lm[0]; const thumbTip = lm[4]; const indexTip = lm[8];
+                        
+                        // Tính kích thước lòng bàn tay làm mốc chuẩn (wrist -> middle finger MCP)
+                        const palmSize = Math.hypot(lm[9].x - wrist.x, lm[9].y - wrist.y);
+                        
+                        const pinchDist = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+                        const normalizedPinch = pinchDist / (palmSize || 0.1);
+                        
+                        const dIndex = Math.hypot(lm[8].x - wrist.x, lm[8].y - wrist.y); 
+                        const dMid = Math.hypot(lm[12].x - wrist.x, lm[12].y - wrist.y); 
+                        const dRing = Math.hypot(lm[16].x - wrist.x, lm[16].y - wrist.y); 
+                        const dPinky = Math.hypot(lm[20].x - wrist.x, lm[20].y - wrist.y); 
+                        const avgOpen = (dIndex + dMid + dRing + dPinky) / 4;
+                        const normalizedOpen = avgOpen / (palmSize || 0.1);
+                        
+                        if (result.landmarks.length === 2) { const hand1 = result.landmarks[0]; const hand2 = result.landmarks[1]; const distThumbs = Math.hypot(hand1[4].x - hand2[4].x, hand1[4].y - hand2[4].y); const distIndexes = Math.hypot(hand1[8].x - hand2[8].x, hand1[8].y - hand2[8].y); if (distThumbs < CONFIG.heartThreshold && distIndexes < CONFIG.heartThreshold) { isHeart = true; } }
+                        const rawFist = (normalizedOpen < 1.3); 
+                        const rawVictory = (dIndex / (palmSize || 0.1) > 1.5) && (dMid / (palmSize || 0.1) > 1.5) && (dRing / (palmSize || 0.1) < 1.35) && (dPinky / (palmSize || 0.1) < 1.35);
+                        const rawOpen = (normalizedOpen > 1.8); 
+                        if(rawVictory) gestureBuffer.pinch++; else gestureBuffer.pinch = 0; if(rawOpen) gestureBuffer.open++; else gestureBuffer.open = 0; if(rawFist) gestureBuffer.fist++; else gestureBuffer.fist = 0; if(isHeart) gestureBuffer.heart++; else gestureBuffer.heart = 0;
+                        const activePinch = gestureBuffer.pinch > CONFIG.gestureThreshold; const activeOpen = gestureBuffer.open > CONFIG.gestureThreshold; const activeFist = gestureBuffer.fist > CONFIG.gestureThreshold; const activeHeart = gestureBuffer.heart > CONFIG.gestureThreshold; 
+                        if (Date.now() > interactionLock) {
+                            if (appState === 'FOX') { if (activeHeart) changeState('SLIDESHOW'); else if (activeFist) changeState('TRANSITION_TO_PEN'); }
+                            else if (appState === 'PEN') { if (activePinch) changeState('READING_LETTER'); else if (activeOpen) changeState('BACK_TO_FOX'); }
+                            else if (['READING_LETTER', 'SLIDESHOW', 'VIEW_PHOTO'].includes(appState)) { if (activeOpen) changeState('BACK_TO_FOX'); }
+                        }
+                    } else { handParallax.x += (0 - handParallax.x) * 0.05; handParallax.y += (0 - handParallax.y) * 0.05; gestureBuffer.heart = 0; }
+                }
+            } requestAnimationFrame(predictWebcam);
+        }
+
+        function stopAllAudio() {
+            const a1 = document.getElementById('audio-bg'); 
+            const a2 = document.getElementById('audio-letter');
+            const a3 = document.getElementById('audio-fox');
+            if (a1) { a1.pause(); a1.currentTime = 0; } 
+            if (a2) { a2.pause(); a2.currentTime = 0; }
+            if (a3) { a3.pause(); a3.currentTime = 0; }
+        }
+        function changeState(newState) {
+            const now = Date.now(); if (now - lastActionTime < 1000) return; if (appState === newState) return; lastActionTime = now; 
+            if (newState === 'TRANSITION_TO_PEN') { 
+                stopAllAudio(); 
+                const a1 = document.getElementById('audio-bg'); 
+                if(a1) { 
+                    if(!isAudioSetup) setupAudioSystem();
+                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    a1.play().catch(e=>console.log("Audio block")); 
+                } 
+                updateStatus("Transforming to Carrot..."); 
+            }
+            else if (newState === 'READING_LETTER') { stopAllAudio(); const a2 = document.getElementById('audio-letter'); if(a2) a2.play().catch(e=>console.log("Audio block")); updateStatus("Opening..."); }
+            else if (newState === 'BACK_TO_FOX') { 
+                stopAllAudio(); 
+                const aFox = document.getElementById('audio-fox');
+                if(aFox) {
+                    if(!isAudioSetup) setupAudioSystem();
+                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    aFox.play().catch(e=>console.log("Audio block"));
+                }
+                updateStatus("Returning to Fox..."); 
+            }
+            else if (newState === 'SLIDESHOW') {
+                stopAllAudio();
+                const a2 = document.getElementById('audio-letter');
+                if(a2) {
+                    if(!isAudioSetup) setupAudioSystem();
+                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    a2.play().catch(e=>console.log("Audio block"));
+                }
+                updateStatus("Our Memories (Heart Detected) ❤️");
+            }
+            else if (newState === 'VIEW_PHOTO') updateStatus("Look at this!");
+            appState = newState;
+        }
+        function setGuide(txt) { const el = document.getElementById('guide-text'); if(el) el.innerHTML = txt; }
+        function updateStatus(msg) { const el = document.getElementById('status-bar'); if(el) el.innerText = msg; }
+        function setupEvents() { window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); bloomPass.resolution.set(window.innerWidth/4, window.innerHeight/4); }); }
+
+        document.addEventListener('click', () => {
+            if (!isAudioSetup) setupAudioSystem();
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            if (appState === 'FOX') {
+                const aFox = document.getElementById('audio-fox');
+                if (aFox && aFox.paused) {
+                    aFox.play().catch(e => console.log("Audio block click"));
+                }
+            }
+        });
+
+        function _0xInit() {
+            const _c = "Tân ❤️ Thảo";
+            const _i = 'dhao-copyright';
+            if(!document.getElementById(_i)){
+                const e = document.createElement('div'); e.id = _i; e.innerText = _c;
+                Object.assign(e.style, { position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000' });
+                document.body.appendChild(e);
+            }
+            init();
+        }
+        _0xInit();
+    </script>
+</body>
+</html>
