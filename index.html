@@ -591,7 +591,7 @@
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "GPU" }, runningMode: "VIDEO", numHands: 2 });
             video = document.getElementById("webcam");
-            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => { video.srcObject = stream; video.addEventListener("loadeddata", predictWebcam); });
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then((stream) => { video.srcObject = stream; video.addEventListener("loadeddata", predictWebcam); });
         }
         async function predictWebcam() {
             if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
@@ -683,7 +683,7 @@
         function updateStatus(msg) { const el = document.getElementById('status-bar'); if(el) el.innerText = msg; }
         function setupEvents() { window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); bloomPass.resolution.set(window.innerWidth/4, window.innerHeight/4); }); }
 
-        document.addEventListener('click', () => {
+        const unlockAudio = () => {
             if (!isAudioSetup) setupAudioSystem();
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
@@ -691,10 +691,12 @@
             if (appState === 'FOX') {
                 const aFox = document.getElementById('audio-fox');
                 if (aFox && aFox.paused) {
-                    aFox.play().catch(e => console.log("Audio block click"));
+                    aFox.play().catch(e => console.log("Audio block click/touch"));
                 }
             }
-        });
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
 
         function _0xInit() {
             const _c = "Tân ❤️ Thảo";
