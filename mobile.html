@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For Vk iu</title>
+    <title>For Vk iu - Mobile Edition</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,23 +27,23 @@
         
         #visualizer-canvas {
             position: absolute; 
-            bottom: 25px; 
+            bottom: 105px; 
             left: 50%; 
             transform: translateX(-50%);
-            width: 40%; 
-            height: 60px; 
+            width: 50%; 
+            height: 40px; 
             z-index: 15; 
             pointer-events: none; 
-            opacity: 0.8; 
+            opacity: 0.6; 
         }
         
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10; pointer-events: none;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 50px 0 30px 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 0 30px 0;
         }
         h1 { 
-            color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 30px; font-weight: 800; 
+            color: #ffffff; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 800; 
             text-transform: uppercase; letter-spacing: 5px; margin: 0; 
             text-shadow: 0 0 15px rgba(255, 255, 255, 0.6); opacity: 0; 
             animation: fadeIn 3s ease-out forwards 1s;
@@ -51,23 +51,36 @@
         .hide-title { opacity: 0 !important; }
         .guide-container { margin-top: 15px; text-align: center; opacity: 0.8; transition: opacity 0.3s; }
         .guide-text { 
-            color: #ffcae5; font-size: 14px; font-weight: 300; font-style: italic; 
+            color: #ffcae5; font-size: 13px; font-weight: 400; font-style: italic; 
             text-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
         }
         .highlight { color: #ffffff; font-weight: 600; text-decoration: underline decoration-pink; }
 
-        #webcam-wrapper {
-            position: absolute; bottom: 20px; left: 20px; width: 120px; height: 90px;
-            border-radius: 8px; overflow: hidden; z-index: 50; background: #000;
-            border: 1px solid rgba(255, 158, 205, 0.3); opacity: 0.5; transition: opacity 0.3s;
+        #mobile-control-bar {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 12px; padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 158, 205, 0.2); border-radius: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
         }
-        #webcam-wrapper:hover { opacity: 1; }
-        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .nav-btn {
+            background: none; border: none; font-size: 24px; cursor: pointer;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: transform 0.2s, background-color 0.2s;
+            pointer-events: auto; outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-btn:active {
+            transform: scale(1.15);
+            background: rgba(255, 158, 205, 0.2);
+        }
+        .nav-btn.active {
+            background: rgba(255, 158, 205, 0.35);
+            box-shadow: 0 0 15px rgba(255, 158, 205, 0.4);
+        }
         
-        #status-bar {
-            position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(82, 37, 56, 0.8);
-            padding: 2px 0; color: #ffcae5; font-size: 10px; text-align: center; z-index: 60;
-        }
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #1a0510; z-index: 100;
@@ -87,8 +100,7 @@
         {
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-                "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
             }
         }
     </script>
@@ -97,11 +109,19 @@
     <div id="loading-screen"><div class="spinner"></div><div class="loader-text">Loading Love...</div></div>
     <div id="background-layer"></div><div id="noise-overlay"></div><div id="canvas-container"></div>
     <canvas id="visualizer-canvas"></canvas>
+    
     <div id="ui-layer">
-        <h1 id="main-title">CAROT_PEN</h1>
-        <div class="guide-container"><span class="guide-text" id="guide-text">Đang chuẩn bị...</span></div>
+        <h1 id="main-title">For Vk iu</h1>
+        <div class="guide-container"><span class="guide-text" id="guide-text">Chạm vào màn hình để bắt đầu ❤️</span></div>
     </div>
-    <div id="webcam-wrapper"><video id="webcam" autoplay playsinline muted></video><div id="status-bar">Init...</div></div>
+    
+    <!-- Thanh điều hướng bằng tay cho Điện thoại -->
+    <div id="mobile-control-bar">
+        <button class="nav-btn active" data-state="FOX" title="Cáo Tuyết">🦊</button>
+        <button class="nav-btn" data-state="TRANSITION_TO_PEN" title="Cà Rốt">🥕</button>
+        <button class="nav-btn" data-state="READING_LETTER" title="Mở Thư">💌</button>
+        <button class="nav-btn" data-state="SLIDESHOW" title="Kỷ Niệm">📸</button>
+    </div>
     
     <audio id="audio-bg" src="./audio.mp3" loop></audio>
     <audio id="audio-letter" src="./The Way I Still Love You - Reynard Silva (Lyrics + Vietsub)  - YouTube.mp3" loop></audio>
@@ -112,7 +132,6 @@
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
         const CONFIG = {
             maxCount: 20000,      
@@ -121,9 +140,7 @@
             fadeSpeed: 2.0, 
             slideSpeed: 15.0, 
             slideGap: 40,     
-            smoothFactor: 0.12, 
-            gestureThreshold: 10, 
-            heartThreshold: 0.15,
+            smoothFactor: 0.12,
             sparkleCount: 150     
         };
 
@@ -150,9 +167,8 @@
         let dummy = new THREE.Object3D();
         const _tempColor = new THREE.Color(); const _targetColor = new THREE.Color(0xff69b4);
 
-        let handLandmarker, video; let isFoxLoaded = false, isPenLoaded = false;
-        let appState = 'FOX'; let interactionLock = 0; let lastActionTime = 0; 
-        let isLoadingDelay = false; let loadingDelayTime = 0;
+        let isFoxLoaded = false, isPenLoaded = false;
+        let appState = 'FOX'; let lastActionTime = 0; 
 
         let handParallax = { x: 0, y: 0 }; let smoothedParallax = { x: 0, y: 0 }; 
         let imagesData = { 1: { data: null, width: 0, height: 0 }, 2: { data: null, width: 0, height: 0 } };
@@ -160,10 +176,8 @@
         let currentBloomStrength = 0; let currentOpacity = 1.0;
         let animLetter = { scale: 0, y: -50, pScale: 1, pY: 0 };
         let animSlide = { opacity: 0 }; let animSinglePhoto = { opacity: 0, scale: 0 };
-        let gestureBuffer = { pinch: 0, open: 0, heart: 0, fist: 0 };
 
         async function init() {
-            updateStatus("Loading Engine...");
             initThree();
             setupPostProcessing();
             setupMessageMesh(); setupSinglePhoto(); setupSlideshow(); 
@@ -176,41 +190,24 @@
             const p2 = loadImage(IMG_PEN, 2);
             
             Promise.all([p1, p2])
-                .then(() => { useImageData(1); updateStatus("Loading AI Vision..."); })
-                .catch(err => { console.error("Error assets", err); updateStatus("Error assets"); });
+                .then(() => { 
+                    useImageData(1); 
+                    isFoxLoaded = true;
+                    isPenLoaded = true;
+                    hideLoading(); 
+                })
+                .catch(err => { 
+                    console.error("Error assets", err); 
+                });
 
-            await initMediaPipe();
-            setupEvents();
             initVisualizer2D();
-            
-            const _hexCre = "Tân ❤️ Thảo";
-            const _cId = 'dhao-copyright';
-            const _el = document.createElement('div');
-            _el.id = _cId;
-            _el.innerText = _hexCre;
-            Object.assign(_el.style, {
-                position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', 
-                fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000'
-            });
-            document.body.appendChild(_el);
-
+            setupEvents();
             animate();
         }
 
         function hideLoading() {
             const el = document.getElementById('loading-screen');
-            if(el && el.style.opacity !== '0') { 
-                el.style.opacity = 0; 
-                setTimeout(() => { if (el) el.remove(); }, 1000); 
-                interactionLock = Date.now() + 3000; // Khóa tương tác 3 giây sau khi vào giao diện
-                
-                const aFox = document.getElementById('audio-fox');
-                if (aFox) {
-                    if(!isAudioSetup) setupAudioSystem();
-                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
-                    aFox.play().catch(e=>console.log("Audio block"));
-                }
-            }
+            if(el && el.style.opacity !== '0') { el.style.opacity = 0; setTimeout(() => { if (el) el.remove(); }, 1000); }
         }
 
         function setupAudioSystem() {
@@ -271,7 +268,7 @@
             scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x5e2240, 0.002);
             camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
             camera.position.z = 70;
-            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "default", alpha: true }); 
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance", alpha: true }); 
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             container.appendChild(renderer.domElement);
@@ -378,8 +375,6 @@
                             extIndex++;
                             if (extIndex < extensions.length) {
                                 tryLoad();
-                            } else {
-                                console.error(`Error loading image ${i} with any supported extension.`);
                             }
                         }
                     );
@@ -431,13 +426,13 @@
             }, undefined, (err) => console.log("Err mess"));
         }
         function setupSinglePhoto() {
-             const textureLoader = new THREE.TextureLoader();
-             textureLoader.load(IMG_PHOTO_SINGLE, (tex) => {
-                const aspect = tex.image.width / tex.image.height; const h = 40; const w = h * aspect;
-                const geo = new THREE.PlaneGeometry(w, h);
-                const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, side: THREE.DoubleSide });
-                singlePhotoMesh = new THREE.Mesh(geo, mat); singlePhotoMesh.position.set(0, 0, 30); scene.add(singlePhotoMesh);
-             }, undefined, (err) => console.log("Err photo"));
+              const textureLoader = new THREE.TextureLoader();
+              textureLoader.load(IMG_PHOTO_SINGLE, (tex) => {
+                 const aspect = tex.image.width / tex.image.height; const h = 40; const w = h * aspect;
+                 const geo = new THREE.PlaneGeometry(w, h);
+                 const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, side: THREE.DoubleSide });
+                 singlePhotoMesh = new THREE.Mesh(geo, mat); singlePhotoMesh.position.set(0, 0, 30); scene.add(singlePhotoMesh);
+              }, undefined, (err) => console.log("Err photo"));
         }
         function loadImage(url, id) {
             return new Promise((resolve, reject) => {
@@ -447,7 +442,7 @@
                     const maxSize = 400; const aspect = img.width / img.height; const h = maxSize; const w = Math.floor(h * aspect);
                     canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
                     imagesData[id].data = ctx.getImageData(0, 0, w, h).data; imagesData[id].width = w; imagesData[id].height = h;
-                    if(id===1) isFoxLoaded=true; else isPenLoaded=true; resolve();
+                    resolve();
                 };
                 img.onerror = () => reject();
             });
@@ -481,15 +476,6 @@
         }
         
         function animate() {
-            const _0x1 = document.getElementById('dhao-copyright');
-            const _0x2 = "Tân ❤️ Thảo";
-            if (!_0x1 || _0x1.innerText !== _0x2 || getComputedStyle(_0x1).display === 'none' || getComputedStyle(_0x1).opacity === '0' || getComputedStyle(_0x1).visibility === 'hidden') {
-                if (scene) scene.clear();
-                const _n = document.createElement('div'); _n.id = 'dhao-copyright'; _n.innerText = _0x2;
-                Object.assign(_n.style, { position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000' });
-                document.body.appendChild(_n);
-            }
-
             requestAnimationFrame(animate);
             const dt = clock.getDelta();
 
@@ -513,19 +499,18 @@
             smoothedParallax.x += (handParallax.x - smoothedParallax.x) * 3.0 * dt; smoothedParallax.y += (handParallax.y - smoothedParallax.y) * 3.0 * dt;
             const tiltX = smoothedParallax.y * 0.3; const tiltY = smoothedParallax.x * 0.3; const breathingY = Math.sin(time * 0.5) * 0.1;
 
-            if (isLoadingDelay) { loadingDelayTime -= dt; if (loadingDelayTime <= 0) { isLoadingDelay = false; setGuide("Nắm tay <span class='highlight'>✊</span> để biến Cà rốt, hoặc ghép Tim 🫶"); } }
             const h1 = document.getElementById('main-title'); if(h1) { if(appState === 'READING_LETTER') h1.classList.add('hide-title'); else h1.classList.remove('hide-title'); }
 
             switch (appState) {
-                case 'FOX': targetOpacity = 1.0; targetBloom = 0.0; if (isLoadingDelay) setGuide("Loading..."); break;
+                case 'FOX': targetOpacity = 1.0; targetBloom = 0.0; setGuide("Chú Cáo Tuyết đáng yêu 🦊"); break;
                 case 'TRANSITION_TO_PEN': targetOpacity = 0.0; targetBloom = 4.0; moveTarget = 'SCATTER'; if (currentOpacity < 0.05) { useImageData(2); mainGroup.rotation.set(0,0,0); appState = 'REASSEMBLING_PEN'; } break;
                 case 'REASSEMBLING_PEN': targetOpacity = 1.0; targetBloom = 0.0; moveTarget = 'TARGET'; if (currentOpacity > 0.95) appState = 'PEN'; break;
-                case 'PEN': targetOpacity = 1.0; targetBloom = 0.0; setGuide("Giơ ngón tay chữ V <span class='highlight'>✌️</span> mở thư, hoặc Xòe tay về Cáo"); break;
-                case 'READING_LETTER': targetOpacity = 0.4; targetBloom = 0.0; setGuide("Xòe tay <span class='highlight'>✋</span> để đóng thư"); break;
+                case 'PEN': targetOpacity = 1.0; targetBloom = 0.0; setGuide("Bút Cà Rốt phép thuật 🥕"); break;
+                case 'READING_LETTER': targetOpacity = 0.4; targetBloom = 0.0; setGuide("Bức thư dành tặng Vk iu 💌"); break;
                 case 'BACK_TO_FOX': targetOpacity = 0.0; targetBloom = 4.0; moveTarget = 'SCATTER'; if (currentOpacity < 0.05) { useImageData(1); mainGroup.rotation.set(0,0,0); appState = 'REASSEMBLING_FOX'; } break;
-                case 'REASSEMBLING_FOX': targetOpacity = 1.0; targetBloom = 0.0; moveTarget = 'TARGET'; if (currentOpacity > 0.95) { appState = 'FOX'; updateStatus("Cáo đã về."); isLoadingDelay = true; loadingDelayTime = 2.0; setGuide("Loading..."); interactionLock = Date.now() + 2000; } break;
-                case 'SLIDESHOW': targetOpacity = 0.0; targetBloom = 0.0; moveTarget = 'SCATTER'; setGuide("Xòe tay <span class='highlight'>✋</span> để quay lại."); break;
-                case 'VIEW_PHOTO': targetOpacity = 0.2; targetBloom = 0.1; setGuide("Xòe tay <span class='highlight'>✋</span> để quay lại."); break;
+                case 'REASSEMBLING_FOX': targetOpacity = 1.0; targetBloom = 0.0; moveTarget = 'TARGET'; if (currentOpacity > 0.95) { appState = 'FOX'; } break;
+                case 'SLIDESHOW': targetOpacity = 0.0; targetBloom = 0.0; moveTarget = 'SCATTER'; setGuide("Album ảnh kỷ niệm của chúng mình 📸"); break;
+                case 'VIEW_PHOTO': targetOpacity = 0.2; targetBloom = 0.1; setGuide("Ảnh kỷ niệm ngọt ngào ❤️"); break;
             }
 
             if (appState === 'VIEW_PHOTO') { animSinglePhoto.opacity += (1.0 - animSinglePhoto.opacity) * 2.0 * dt; animSinglePhoto.scale += (1.0 - animSinglePhoto.scale) * 2.0 * dt; } 
@@ -586,45 +571,6 @@
             } else if (sparkleSystem) { sparkleSystem.visible = false; }
         }
 
-        let lastVideoTime = -1;
-        async function initMediaPipe() {
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "CPU" }, runningMode: "VIDEO", numHands: 2 });
-            video = document.getElementById("webcam");
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then((stream) => { video.srcObject = stream; video.addEventListener("loadeddata", predictWebcam); });
-        }
-        async function predictWebcam() {
-            if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
-                lastVideoTime = video.currentTime;
-                if (handLandmarker && isFoxLoaded && isPenLoaded) {
-                    let startTimeMs = performance.now(); const result = handLandmarker.detectForVideo(video, startTimeMs);
-                    hideLoading();
-                    if (result.landmarks && result.landmarks.length > 0) {
-                        let centerX = 0, centerY = 0; result.landmarks.forEach(lm => { centerX += lm[0].x; centerY += lm[0].y; }); centerX /= result.landmarks.length; centerY /= result.landmarks.length;
-                        const targetX = (0.5 - centerX) * 2.5; const targetY = (0.5 - centerY) * 2.5;
-                        handParallax.x += (targetX - handParallax.x) * CONFIG.smoothFactor; handParallax.y += (targetY - handParallax.y) * CONFIG.smoothFactor;
-                        let isHeart = false; 
-                        const lm = result.landmarks[0];
-                        const isIndexOpen = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) > Math.hypot(lm[6].x - lm[0].x, lm[6].y - lm[0].y) * 1.05;
-                        const isMiddleOpen = Math.hypot(lm[12].x - lm[0].x, lm[12].y - lm[0].y) > Math.hypot(lm[10].x - lm[0].x, lm[10].y - lm[0].y) * 1.05;
-                        const isRingOpen = Math.hypot(lm[16].x - lm[0].x, lm[16].y - lm[0].y) > Math.hypot(lm[14].x - lm[0].x, lm[14].y - lm[0].y) * 1.05;
-                        const isPinkyOpen = Math.hypot(lm[20].x - lm[0].x, lm[20].y - lm[0].y) > Math.hypot(lm[18].x - lm[0].x, lm[18].y - lm[0].y) * 1.05;
-                        if (result.landmarks.length === 2) { const hand1 = result.landmarks[0]; const hand2 = result.landmarks[1]; const distThumbs = Math.hypot(hand1[4].x - hand2[4].x, hand1[4].y - hand2[4].y); const distIndexes = Math.hypot(hand1[8].x - hand2[8].x, hand1[8].y - hand2[8].y); if (distThumbs < CONFIG.heartThreshold && distIndexes < CONFIG.heartThreshold) { isHeart = true; } }
-                        const rawFist = !isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen; 
-                        const rawVictory = isIndexOpen && isMiddleOpen && !isRingOpen && !isPinkyOpen;
-                        const rawOpen = isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen; 
-                        if(rawVictory) gestureBuffer.pinch++; else gestureBuffer.pinch = 0; if(rawOpen) gestureBuffer.open++; else gestureBuffer.open = 0; if(rawFist) gestureBuffer.fist++; else gestureBuffer.fist = 0; if(isHeart) gestureBuffer.heart++; else gestureBuffer.heart = 0;
-                        const activePinch = gestureBuffer.pinch > CONFIG.gestureThreshold; const activeOpen = gestureBuffer.open > CONFIG.gestureThreshold; const activeFist = gestureBuffer.fist > CONFIG.gestureThreshold; const activeHeart = gestureBuffer.heart > CONFIG.gestureThreshold; 
-                        if (Date.now() > interactionLock) {
-                            if (appState === 'FOX') { if (activeHeart) changeState('SLIDESHOW'); else if (activeFist) changeState('TRANSITION_TO_PEN'); }
-                            else if (appState === 'PEN') { if (activePinch) changeState('READING_LETTER'); else if (activeOpen) changeState('BACK_TO_FOX'); }
-                            else if (['READING_LETTER', 'SLIDESHOW', 'VIEW_PHOTO'].includes(appState)) { if (activeOpen) changeState('BACK_TO_FOX'); }
-                        }
-                    } else { handParallax.x += (0 - handParallax.x) * 0.05; handParallax.y += (0 - handParallax.y) * 0.05; gestureBuffer.heart = 0; }
-                }
-            } requestAnimationFrame(predictWebcam);
-        }
-
         function stopAllAudio() {
             const a1 = document.getElementById('audio-bg'); 
             const a2 = document.getElementById('audio-letter');
@@ -633,9 +579,14 @@
             if (a2) { a2.pause(); a2.currentTime = 0; }
             if (a3) { a3.pause(); a3.currentTime = 0; }
         }
+        
         function changeState(newState) {
-            const now = Date.now(); if (now - lastActionTime < 1000) return; if (appState === newState) return; lastActionTime = now; 
-            if (newState === 'TRANSITION_TO_PEN') { 
+            if (appState === newState) return;
+            lastActionTime = Date.now(); 
+            
+            let resolvedState = newState;
+            
+            if (resolvedState === 'TRANSITION_TO_PEN') { 
                 stopAllAudio(); 
                 const a1 = document.getElementById('audio-bg'); 
                 if(a1) { 
@@ -643,10 +594,19 @@
                     if(audioContext && audioContext.state === 'suspended') audioContext.resume();
                     a1.play().catch(e=>console.log("Audio block")); 
                 } 
-                updateStatus("Transforming to Carrot..."); 
+                updateStatus("Đang biến hình..."); 
             }
-            else if (newState === 'READING_LETTER') { stopAllAudio(); const a2 = document.getElementById('audio-letter'); if(a2) a2.play().catch(e=>console.log("Audio block")); updateStatus("Opening..."); }
-            else if (newState === 'BACK_TO_FOX') { 
+            else if (resolvedState === 'READING_LETTER') { 
+                stopAllAudio(); 
+                const a2 = document.getElementById('audio-letter'); 
+                if(a2) {
+                    if(!isAudioSetup) setupAudioSystem();
+                    if(audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    a2.play().catch(e=>console.log("Audio block")); 
+                }
+                updateStatus("Đang mở thư..."); 
+            }
+            else if (resolvedState === 'FOX') { 
                 stopAllAudio(); 
                 const aFox = document.getElementById('audio-fox');
                 if(aFox) {
@@ -654,9 +614,10 @@
                     if(audioContext && audioContext.state === 'suspended') audioContext.resume();
                     aFox.play().catch(e=>console.log("Audio block"));
                 }
-                updateStatus("Returning to Fox..."); 
+                updateStatus("Trở lại Cáo Tuyết..."); 
+                resolvedState = 'BACK_TO_FOX';
             }
-            else if (newState === 'SLIDESHOW') {
+            else if (resolvedState === 'SLIDESHOW') {
                 stopAllAudio();
                 const a2 = document.getElementById('audio-letter');
                 if(a2) {
@@ -664,15 +625,58 @@
                     if(audioContext && audioContext.state === 'suspended') audioContext.resume();
                     a2.play().catch(e=>console.log("Audio block"));
                 }
-                updateStatus("Our Memories (Heart Detected) ❤️");
+                updateStatus("Album kỷ niệm...");
             }
-            else if (newState === 'VIEW_PHOTO') updateStatus("Look at this!");
-            appState = newState;
+            
+            appState = resolvedState;
         }
-        function setGuide(txt) { const el = document.getElementById('guide-text'); if(el) el.innerHTML = txt; }
-        function updateStatus(msg) { const el = document.getElementById('status-bar'); if(el) el.innerText = msg; }
-        function setupEvents() { window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); bloomPass.resolution.set(window.innerWidth/4, window.innerHeight/4); }); }
 
+        function setGuide(txt) { const el = document.getElementById('guide-text'); if(el) el.innerHTML = txt; }
+        function updateStatus(msg) { console.log(msg); }
+        
+        function setupEvents() { 
+            window.addEventListener('resize', () => { 
+                camera.aspect = window.innerWidth/window.innerHeight; 
+                camera.updateProjectionMatrix(); 
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+                composer.setSize(window.innerWidth, window.innerHeight); 
+                bloomPass.resolution.set(window.innerWidth/4, window.innerHeight/4); 
+            }); 
+
+            // Điều khiển góc xoay (Parallax) 3D bằng cử chỉ di tay (Finger Touch/Drag) cực mượt mà
+            const handleMove = (xVal, yVal) => {
+                const x = (xVal / window.innerWidth - 0.5) * 2;
+                const y = (yVal / window.innerHeight - 0.5) * 2;
+                handParallax.x = -x * 1.5;
+                handParallax.y = -y * 1.5;
+            };
+
+            window.addEventListener('pointermove', (e) => {
+                handleMove(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            });
+            
+            // Xử lý click thanh điều khiển bằng tay
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetState = btn.getAttribute('data-state');
+                    
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    changeState(targetState);
+                });
+            });
+        }
+
+        // Mở khóa tiếng khi chạm màn hình lần đầu
         const unlockAudio = () => {
             if (!isAudioSetup) setupAudioSystem();
             if (audioContext && audioContext.state === 'suspended') {
@@ -681,24 +685,16 @@
             if (appState === 'FOX') {
                 const aFox = document.getElementById('audio-fox');
                 if (aFox && aFox.paused) {
-                    aFox.play().catch(e => console.log("Audio block click/touch"));
+                    aFox.play().catch(e => console.log("Audio unlock fail"));
                 }
             }
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
         };
         document.addEventListener('click', unlockAudio);
         document.addEventListener('touchstart', unlockAudio);
 
-        function _0xInit() {
-            const _c = "Tân ❤️ Thảo";
-            const _i = 'dhao-copyright';
-            if(!document.getElementById(_i)){
-                const e = document.createElement('div'); e.id = _i; e.innerText = _c;
-                Object.assign(e.style, { position: 'fixed', bottom: '8px', right: '12px', color: '#ffffff', fontSize: '12px', fontFamily: "'Montserrat', sans-serif", fontWeight: '600', zIndex: '999999', pointerEvents: 'none', userSelect: 'none', textShadow: '0 0 4px #000' });
-                document.body.appendChild(e);
-            }
-            init();
-        }
-        _0xInit();
+        init();
     </script>
 </body>
 </html>
